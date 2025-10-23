@@ -2342,7 +2342,7 @@
             }
         });
 
-        // Restore Data
+        // Restore Data - Merge without duplicates
         document.getElementById('restoreDataBtn').addEventListener('click', function () {
             const fileInput = document.getElementById('restoreFileInput');
             const file = fileInput.files[0];
@@ -2357,13 +2357,6 @@
                 return;
             }
 
-            if (!confirm('⚠️ PERINGATAN!\n\n' +
-                'Restore akan MENIMPA semua data yang ada saat ini.\n' +
-                'Pastikan Anda sudah backup data yang ada.\n\n' +
-                'Lanjutkan restore?')) {
-                return;
-            }
-
             const reader = new FileReader();
 
             reader.onload = function (e) {
@@ -2375,31 +2368,151 @@
                         throw new Error('Format file backup tidak valid!');
                     }
 
-                    // Restore data ke localStorage
-                    localStorage.setItem('allJobOrders', JSON.stringify(backupData.data.allJobOrders || []));
-                    localStorage.setItem('allStaffingData', JSON.stringify(backupData.data.allStaffingData || []));
-                    localStorage.setItem('allCostData', JSON.stringify(backupData.data.allCostData || []));
-                    localStorage.setItem('customers', JSON.stringify(backupData.data.customers || []));
+                    // Statistik untuk report
+                    let stats = {
+                        jobOrders: { existing: allJobOrders.length, imported: 0, skipped: 0 },
+                        staffing: { existing: allStaffingData.length, imported: 0, skipped: 0 },
+                        cost: { existing: allCostData.length, imported: 0, skipped: 0 },
+                        customers: { existing: 0, imported: 0, skipped: 0 }
+                    };
 
-                    // Reload data ke variabel
-                    allJobOrders = backupData.data.allJobOrders || [];
-                    allStaffingData = backupData.data.allStaffingData || [];
-                    allCostData = backupData.data.allCostData || [];
+                    // ===== MERGE JOB ORDERS =====
+                    const existingJobOrderNos = new Set(allJobOrders.map(jo => jo.jobOrderNo));
+                    const backupJobOrders = backupData.data.allJobOrders || [];
 
-                    // Refresh UI
+                    backupJobOrders.forEach(jo => {
+                        if (!existingJobOrderNos.has(jo.jobOrderNo)) {
+                            // Generate new ID untuk menghindari konflik
+                            jo.id = Date.now().toString() + Math.random().toString(36).substr(2, 9);
+                            allJobOrders.push(jo);
+                            stats.jobOrders.imported++;
+                        } else {
+                            stats.jobOrders.skipped++;
+                        }
+                    });
+
+                    // ===== MERGE STAFFING DATA =====
+                    // Buat unique key dari jobOrderNo + date + containers
+                    const existingStaffingKeys = new Set(allStaffingData.map(sd => {
+                        const jo = allJobOrders.find(j => j.id === sd.jobOrderId);
+                        const containerNos = sd.containers.map(c => c.number).sort().join('|');
+                        return jo ? `${jo.jobOrderNo}_${sd.date}_${containerNos}` : null;
+                    }).filter(Boolean));
+
+                    const backupStaffing = backupData.data.allStaffingData || [];
+
+                    backupStaffing.forEach(sd => {
+                        // Cari job order yang sesuai berdasarkan jobOrderNo
+                        const matchingJO = allJobOrders.find(jo => jo.jobOrderNo === sd.jobOrderNo);
+
+                        if (matchingJO) {
+                            const containerNos = sd.containers.map(c => c.number).sort().join('|');
+                            const uniqueKey = `${sd.jobOrderNo}_${sd.date}_${containerNos}`;
+
+                            if (!existingStaffingKeys.has(uniqueKey)) {
+                                // Update jobOrderId ke ID yang ada di sistem
+                                sd.jobOrderId = matchingJO.id;
+                                sd.id = Date.now().toString() + Math.random().toString(36).substr(2, 9);
+                                allStaffingData.push(sd);
+                                stats.staffing.imported++;
+                            } else {
+                                stats.staffing.skipped++;
+                            }
+                        } else {
+                            // Job Order tidak ditemukan, skip
+                            stats.staffing.skipped++;
+                        }
+                    });
+
+                    // ===== MERGE COST DATA =====
+                    // Buat unique key dari jobOrderNo + items
+                    const existingCostKeys = new Set(allCostData.map(cd => {
+                        const jo = allJobOrders.find(j => j.id === cd.jobOrderId);
+                        const itemsKey = cd.items.map(i => `${i.name}_${i.price}_${i.quantity}`).sort().join('|');
+                        return jo ? `${jo.jobOrderNo}_${itemsKey}` : null;
+                    }).filter(Boolean));
+
+                    const backupCost = backupData.data.allCostData || [];
+
+                    backupCost.forEach(cd => {
+                        // Cari job order yang sesuai
+                        const matchingJO = allJobOrders.find(jo => jo.jobOrderNo === cd.jobOrderNo);
+
+                        if (matchingJO) {
+                            const itemsKey = cd.items.map(i => `${i.name}_${i.price}_${i.quantity}`).sort().join('|');
+                            const uniqueKey = `${cd.jobOrderNo}_${itemsKey}`;
+
+                            if (!existingCostKeys.has(uniqueKey)) {
+                                cd.jobOrderId = matchingJO.id;
+                                cd.id = Date.now().toString() + Math.random().toString(36).substr(2, 9);
+                                allCostData.push(cd);
+                                stats.cost.imported++;
+                            } else {
+                                stats.cost.skipped++;
+                            }
+                        } else {
+                            stats.cost.skipped++;
+                        }
+                    });
+
+                    // ===== MERGE CUSTOMERS =====
+                    const existingCustomers = JSON.parse(localStorage.getItem('customers')) || [];
+                    const backupCustomers = backupData.data.customers || [];
+
+                    stats.customers.existing = existingCustomers.length;
+
+                    backupCustomers.forEach(customer => {
+                        if (!existingCustomers.includes(customer)) {
+                            existingCustomers.push(customer);
+                            stats.customers.imported++;
+                        } else {
+                            stats.customers.skipped++;
+                        }
+                    });
+
+                    // ===== SAVE TO LOCALSTORAGE =====
+                    localStorage.setItem('allJobOrders', JSON.stringify(allJobOrders));
+                    localStorage.setItem('allStaffingData', JSON.stringify(allStaffingData));
+                    localStorage.setItem('allCostData', JSON.stringify(allCostData));
+                    localStorage.setItem('customers', JSON.stringify(existingCustomers));
+
+                    // ===== REFRESH UI =====
                     loadJobOrdersList();
                     initializeData();
                     renderJobOrderHistory();
                     renderStaffingHistory();
                     renderCostHistory();
 
-                    alert(`✅ Restore berhasil!\n\n` +
-                        `Job Orders: ${allJobOrders.length}\n` +
-                        `Staffing: ${allStaffingData.length}\n` +
-                        `Biaya: ${allCostData.length}\n` +
-                        `Konsumen: ${backupData.data.customers.length}\n\n` +
+                    // ===== SHOW REPORT =====
+                    const report =
+                        `✅ RESTORE BERHASIL!\n\n` +
+                        `📋 JOB ORDERS:\n` +
+                        `   • Data Sebelumnya: ${stats.jobOrders.existing}\n` +
+                        `   • Berhasil Ditambahkan: ${stats.jobOrders.imported}\n` +
+                        `   • Duplikat (Dilewati): ${stats.jobOrders.skipped}\n` +
+                        `   • Total Sekarang: ${allJobOrders.length}\n\n` +
+                        `👥 STAFFING:\n` +
+                        `   • Data Sebelumnya: ${stats.staffing.existing}\n` +
+                        `   • Berhasil Ditambahkan: ${stats.staffing.imported}\n` +
+                        `   • Duplikat (Dilewati): ${stats.staffing.skipped}\n` +
+                        `   • Total Sekarang: ${allStaffingData.length}\n\n` +
+                        `💰 BIAYA:\n` +
+                        `   • Data Sebelumnya: ${stats.cost.existing}\n` +
+                        `   • Berhasil Ditambahkan: ${stats.cost.imported}\n` +
+                        `   • Duplikat (Dilewati): ${stats.cost.skipped}\n` +
+                        `   • Total Sekarang: ${allCostData.length}\n\n` +
+                        `🏢 KONSUMEN:\n` +
+                        `   • Data Sebelumnya: ${stats.customers.existing}\n` +
+                        `   • Berhasil Ditambahkan: ${stats.customers.imported}\n` +
+                        `   • Duplikat (Dilewati): ${stats.customers.skipped}\n` +
+                        `   • Total Sekarang: ${existingCustomers.length}\n\n` +
                         `Tanggal Backup: ${new Date(backupData.backupDate).toLocaleString('id-ID')}\n\n` +
-                        `Halaman akan di-refresh...`);
+                        `Halaman akan di-refresh...`;
+
+                    alert(report);
+
+                    // Reset file input
+                    fileInput.value = '';
 
                     // Refresh halaman
                     setTimeout(() => {
@@ -2418,7 +2531,6 @@
 
             reader.readAsText(file);
         });
-
         // Clear All Data
         document.getElementById('clearAllDataBtn').addEventListener('click', function () {
             if (!confirm('⚠️ PERINGATAN KERAS!\n\n' +
@@ -2482,4 +2594,4 @@
     </script>
 </body>
 
-</html>s
+</html>
