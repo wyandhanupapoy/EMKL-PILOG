@@ -368,60 +368,64 @@
         }
 
         @media print {
-    @page {
-        size: A4;
-        margin: 0;
-    }
+            @page {
+                size: A4;
+                margin: 0;
+            }
 
-    html, body {
-        width: 210mm;
-        height: 297mm;
-        margin: 0;
-        padding: 0;
-        background: white;
-        overflow: hidden;
-    }
+            html,
+            body {
+                width: 210mm;
+                height: 297mm;
+                margin: 0;
+                padding: 0;
+                background: white;
+                overflow: hidden;
+            }
 
-    /* Sembunyikan semua kecuali invoice */
-    body * {
-        visibility: hidden !important;
-    }
+            /* Sembunyikan semua kecuali invoice */
+            body * {
+                visibility: hidden !important;
+            }
 
-    .invoice-preview, 
-    .invoice-preview * {
-        visibility: visible !important;
-    }
+            .invoice-preview,
+            .invoice-preview * {
+                visibility: visible !important;
+            }
 
-    .invoice-preview {
-        position: absolute; /* bukan fixed */
-        top: -10px; /* naikkan agar benar-benar mulai dari ujung */
-        left: 0;
-        width: 210mm;
-        height: 297mm;
-        margin: 0;
-        padding: 0;
-        border: none !important;
-        background: white !important;
-        overflow: hidden !important;
-        transform: scale(0.95); /* kalau isi terlalu panjang ubah 0.9 atau 0.85 */
-        transform-origin: top left;
-        page-break-after: avoid !important;
-        page-break-before: avoid !important;
-        page-break-inside: avoid !important;
-    }
+            .invoice-preview {
+                position: absolute;
+                /* bukan fixed */
+                top: -10px;
+                /* naikkan agar benar-benar mulai dari ujung */
+                left: 0;
+                width: 210mm;
+                height: 297mm;
+                margin: 0;
+                padding: 0;
+                border: none !important;
+                background: white !important;
+                overflow: hidden !important;
+                transform: scale(0.95);
+                /* kalau isi terlalu panjang ubah 0.9 atau 0.85 */
+                transform-origin: top left;
+                page-break-after: avoid !important;
+                page-break-before: avoid !important;
+                page-break-inside: avoid !important;
+            }
 
-    /* Cegah browser duplikasi konten di tiap halaman */
-    .invoice-preview::after {
-        content: "";
-        display: block;
-        height: 0;
-        page-break-after: avoid;
-    }
+            /* Cegah browser duplikasi konten di tiap halaman */
+            .invoice-preview::after {
+                content: "";
+                display: block;
+                height: 0;
+                page-break-after: avoid;
+            }
 
-    .no-print {
-        display: none !important;
-    }
-}
+            .no-print {
+                display: none !important;
+            }
+        }
 
 
         .history-section {
@@ -1798,46 +1802,53 @@
         }
 
         // Add cost item
+        // Add cost item
         document.getElementById('addCostItemBtn').addEventListener('click', addCostItem);
 
         function addCostItem() {
+            const jobOrderId = document.getElementById('jobOrderSelectCost').value;
+            if (!jobOrderId) {
+                alert('Pilih Job Order terlebih dahulu!');
+                return;
+            }
+
             const costItems = document.getElementById('costItems');
             const itemCount = costItems.querySelectorAll('.cost-item').length;
 
             const costItem = document.createElement('div');
             costItem.className = 'cost-item';
             costItem.innerHTML = `
-                <div class="cost-header">
-                    <input type="text" class="item-name" placeholder="Nama Item" value="EMKL">
-                    <button type="button" class="remove-item-btn">Hapus</button>
-                </div>
-                <div class="cost-details">
-                    <div>
-                        <label>Harga:</label>
-                        <input type="number" class="item-price" value="100000" min="0">
-                    </div>
-                    <div>
-                        <label>Jumlah:</label>
-                        <input type="number" class="item-quantity" value="1" min="1">
-                    </div>
-                    <div>
-                        <label>PPN 11%:</label>
-                        <input type="checkbox" class="item-ppn" checked>
-                    </div>
-                    <div>
-                        <label>DPP:</label>
-                        <input type="text" class="item-dpp" readonly>
-                    </div>
-                    <div>
-                        <label>PPN:</label>
-                        <input type="text" class="item-ppn-amount" readonly>
-                    </div>
-                    <div>
-                        <label>Total:</label>
-                        <input type="text" class="item-total" readonly>
-                    </div>
-                </div>
-            `;
+        <div class="cost-header">
+            <input type="text" class="item-name" placeholder="Nama Item" value="EMKL">
+            <button type="button" class="remove-item-btn">Hapus</button>
+        </div>
+        <div class="cost-details">
+            <div>
+                <label>Harga:</label>
+                <input type="number" class="item-price" value="100000" min="0">
+            </div>
+            <div>
+                <label>Jumlah:</label>
+                <input type="number" class="item-quantity" value="1" min="1">
+            </div>
+            <div>
+                <label>PPN 11%:</label>
+                <input type="checkbox" class="item-ppn" checked>
+            </div>
+            <div>
+                <label>DPP:</label>
+                <input type="text" class="item-dpp" readonly>
+            </div>
+            <div>
+                <label>PPN:</label>
+                <input type="text" class="item-ppn-amount" readonly>
+            </div>
+            <div>
+                <label>Total:</label>
+                <input type="text" class="item-total" readonly>
+            </div>
+        </div>
+    `;
 
             costItems.appendChild(costItem);
 
@@ -1857,6 +1868,99 @@
             calculateItemCost(costItem);
         }
 
+        // Fungsi untuk memuat data cost ketika job order dipilih
+        document.getElementById('jobOrderSelectCost').addEventListener('change', function () {
+            const jobOrderId = this.value;
+            if (!jobOrderId) {
+                clearCostForm();
+                return;
+            }
+
+            // Cari data cost yang sudah tersimpan
+            const existingCostData = allCostData.find(cd => cd.jobOrderId === jobOrderId);
+
+            if (existingCostData) {
+                loadCostData(existingCostData);
+            } else {
+                clearCostForm();
+                // Tambahkan satu item kosong untuk input baru
+                addCostItem();
+            }
+        });
+
+        // Fungsi untuk memuat data cost ke dalam form
+        function loadCostData(costData) {
+            const costItemsContainer = document.getElementById('costItems');
+
+            // Kosongkan form terlebih dahulu
+            costItemsContainer.innerHTML = '';
+
+            // Tambahkan item-item cost yang sudah ada
+            costData.items.forEach((item, index) => {
+                const costItem = document.createElement('div');
+                costItem.className = 'cost-item';
+                costItem.innerHTML = `
+            <div class="cost-header">
+                <input type="text" class="item-name" placeholder="Nama Item" value="${item.name || 'EMKL'}">
+                <button type="button" class="remove-item-btn">Hapus</button>
+            </div>
+            <div class="cost-details">
+                <div>
+                    <label>Harga:</label>
+                    <input type="number" class="item-price" value="${item.price || 0}" min="0">
+                </div>
+                <div>
+                    <label>Jumlah:</label>
+                    <input type="number" class="item-quantity" value="${item.quantity || 1}" min="1">
+                </div>
+                <div>
+                    <label>PPN 11%:</label>
+                    <input type="checkbox" class="item-ppn" ${item.ppn ? 'checked' : ''}>
+                </div>
+                <div>
+                    <label>DPP:</label>
+                    <input type="text" class="item-dpp" readonly>
+                </div>
+                <div>
+                    <label>PPN:</label>
+                    <input type="text" class="item-ppn-amount" readonly>
+                </div>
+                <div>
+                    <label>Total:</label>
+                    <input type="text" class="item-total" readonly>
+                </div>
+            </div>
+        `;
+
+                costItemsContainer.appendChild(costItem);
+
+                // Add event listeners
+                costItem.querySelector('.remove-item-btn').addEventListener('click', function () {
+                    costItem.remove();
+                    calculateTotalCost();
+                });
+
+                costItem.querySelectorAll('.item-price, .item-quantity, .item-ppn').forEach(input => {
+                    input.addEventListener('input', function () {
+                        calculateItemCost(costItem);
+                    });
+                });
+
+                // Calculate initial cost
+                calculateItemCost(costItem);
+            });
+
+            // Hitung total setelah semua item dimuat
+            calculateTotalCost();
+        }
+
+        // Fungsi untuk mengosongkan form cost
+        function clearCostForm() {
+            const costItemsContainer = document.getElementById('costItems');
+            costItemsContainer.innerHTML = '';
+            document.getElementById('costTotal').textContent = 'Total: Rp 0';
+        }
+
         // Calculate cost for a single item
         function calculateItemCost(costItem) {
             const price = parseFloat(costItem.querySelector('.item-price').value) || 0;
@@ -1865,8 +1969,8 @@
 
             const subtotal = price * quantity;
             const dpp = applyPPN ? subtotal * 11 / 12 : subtotal;
-            const ppn = applyPPN ? subtotal * 11 / 100 : 0;
-            const total = subtotal + ppn;
+            const ppn = applyPPN ? subtotal * 1 / 12 : 0;
+            const total = subtotal;
 
             // Format to Indonesian Rupiah
             const formatter = new Intl.NumberFormat('id-ID', {
@@ -1897,7 +2001,7 @@
                 subtotal += itemSubtotal;
 
                 if (applyPPN) {
-                    totalPPN += itemSubtotal * 11 / 100;
+                    totalPPN += itemSubtotal * 1 / 12;
                 }
 
                 total += itemSubtotal;
@@ -1913,64 +2017,6 @@
         }
 
         // Save data to localStorage
-
-        // Pastikan event listener ini ADA dan TIDAK DUPLIKAT
-        document.getElementById('jobOrderSelect').addEventListener('change', function () {
-            const jobOrderId = this.value;
-            const staffingContainer = document.getElementById('staffingContainer');
-
-            if (!jobOrderId) {
-                staffingContainer.innerHTML = '<p style="color: #999; font-style: italic;">Silakan pilih Job Order terlebih dahulu</p>';
-                return;
-            }
-
-            const jobOrder = allJobOrders.find(jo => jo.id === jobOrderId);
-            if (!jobOrder) {
-                staffingContainer.innerHTML = '<p style="color: #f44336;">Job Order tidak ditemukan</p>';
-                return;
-            }
-
-            if (!jobOrder.party || jobOrder.party.length === 0) {
-                staffingContainer.innerHTML = '<p style="color: #f44336;">Job Order ini tidak memiliki data party</p>';
-                return;
-            }
-
-            // Clear container
-            staffingContainer.innerHTML = '';
-
-            // Show job order info
-            const infoDiv = document.createElement('div');
-            infoDiv.style.cssText = 'background: #e3f2fd; padding: 10px; margin-bottom: 15px; border-radius: 4px; border: 1px solid #2196F3;';
-            infoDiv.innerHTML = `
-        <strong>📋 Job Order:</strong> ${jobOrder.jobOrderNo}<br>
-        <strong>👤 Konsumen:</strong> ${jobOrder.customerName}<br>
-        <strong>📦 Party:</strong> ${jobOrder.party.map(p => `${p.size} (${p.quantity} unit)`).join(', ')}
-    `;
-            staffingContainer.appendChild(infoDiv);
-
-            // Generate container inputs based on party quantities
-            let containerIndex = 1;
-            jobOrder.party.forEach(partyItem => {
-                for (let i = 0; i < partyItem.quantity; i++) {
-                    const staffingItem = document.createElement('div');
-                    staffingItem.className = 'staffing-item';
-                    staffingItem.innerHTML = `
-                <label style="min-width: 150px;">${partyItem.size} - Container ${containerIndex}:</label>
-                <input type="text" 
-                       data-party="${partyItem.size}" 
-                       data-index="${containerIndex}"
-                       maxlength="20" 
-                       placeholder="Nomor Container"
-                       style="flex: 1;">
-            `;
-                    staffingContainer.appendChild(staffingItem);
-                    containerIndex++;
-                }
-            });
-
-            console.log('Container inputs generated:', containerIndex - 1); // Debug
-        });
-
         document.getElementById('saveCostBtn').addEventListener('click', function () {
             const jobOrderId = document.getElementById('jobOrderSelectCost').value;
             if (!jobOrderId) {
@@ -2020,6 +2066,11 @@
             localStorage.setItem('allCostData', JSON.stringify(allCostData));
             renderCostHistory();
             alert('Data Biaya berhasil disimpan!');
+        });
+
+        // Pastikan form kosong saat pertama kali load
+        document.addEventListener('DOMContentLoaded', function () {
+            clearCostForm();
         });
 
         document.getElementById('toggleCostHistoryBtn').addEventListener('click', function () {
@@ -2174,23 +2225,31 @@
 
             let subtotal = 0;
             let totalPPN = 0;
+            let grandTotal = 0;
 
             costData.items.forEach((cost, index) => {
+                // Hitung subtotal per item (quantity * price)
                 const itemSubtotal = cost.price * cost.quantity;
-                const dpp = cost.ppn ? itemSubtotal * 11 / 12 : itemSubtotal;
-                const ppn = cost.ppn ? itemSubtotal * 11 / 100 : 0;
 
-                subtotal += itemSubtotal + ppn;
-                totalPPN += ppn;
+                // Hitung PPN per item (11% dari itemSubtotal jika cost.ppn true)
+                const itemPPN = cost.ppn ? itemSubtotal * 0.11 : 0;
+
+                // Hitung total per item (subtotal + PPN)
+                const itemTotal = itemSubtotal + itemPPN;
+
+                // Akumulasi ke total keseluruhan
+                subtotal += itemSubtotal;
+                totalPPN += itemPPN;
+                grandTotal += itemTotal;
 
                 const row = document.createElement('tr');
                 row.innerHTML = `
             <td style="text-align: center;">${index + 1}</td>
             <td>${cost.name}</td>
             <td style="text-align: center;">${cost.quantity} x ${formatCurrency(cost.price)}</td>
-            <td style="text-align: right;">${formatCurrency(dpp)}</td>
-            <td style="text-align: right;">${formatCurrency(ppn)}</td>
-            <td style="text-align: right;"><strong>${formatCurrency(itemSubtotal)}</strong></td>
+            <td style="text-align: right;">${formatCurrency(itemSubtotal)}</td>
+            <td style="text-align: right;">${formatCurrency(itemPPN)}</td>
+            <td style="text-align: right;"><strong>${formatCurrency(itemTotal)}</strong></td>
         `;
                 invoiceTable.appendChild(row);
             });
@@ -2198,12 +2257,10 @@
             // Update totals
             document.getElementById('invSubtotal').textContent = formatCurrency(subtotal);
             document.getElementById('invPPN').textContent = formatCurrency(totalPPN);
-            document.getElementById('invTotal').textContent = formatCurrency(subtotal);
+            document.getElementById('invTotal').textContent = formatCurrency(grandTotal);
 
             // Update terbilang
-            document.getElementById('invTerbilang').textContent = angkaTerbilang(subtotal);
-
-            // Tambahkan setelah update terbilang dan sebelum show invoice preview
+            document.getElementById('invTerbilang').textContent = angkaTerbilang(grandTotal);
 
             // Show active bank account if exists
             const activeBankAccount = bankAccounts.find(acc => acc.isActive);
@@ -2212,11 +2269,11 @@
             if (activeBankAccount) {
                 bankInfoDiv.style.display = 'block';
                 bankInfoDiv.innerHTML = `
-        <h4>INFORMASI PEMBAYARAN</h4>
-        <p><strong>Bank:</strong> ${activeBankAccount.bankName}</p>
-        <p><strong>No. Rekening:</strong> ${activeBankAccount.accountNumber}</p>
-        <p><strong>Atas Nama:</strong> ${activeBankAccount.accountHolder}</p>
-    `;
+            <h4>INFORMASI PEMBAYARAN</h4>
+            <p><strong>Bank:</strong> ${activeBankAccount.bankName}</p>
+            <p><strong>No. Rekening:</strong> ${activeBankAccount.accountNumber}</p>
+            <p><strong>Atas Nama:</strong> ${activeBankAccount.accountHolder}</p>
+        `;
             } else {
                 bankInfoDiv.style.display = 'none';
             }
@@ -2226,7 +2283,7 @@
             invoicePreview.style.display = 'block';
             invoicePreview.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-            alert(`Invoice berhasil di-generate!\n\nNo. Invoice: ${invoiceNo}\nTotal: ${formatCurrency(subtotal)}\nTerbilang: ${angkaTerbilang(subtotal)}`);
+            alert(`Invoice berhasil di-generate!\n\nNo. Invoice: ${invoiceNo}\nTotal: ${formatCurrency(grandTotal)}\nTerbilang: ${angkaTerbilang(grandTotal)}`);
         });
 
         // Print invoice
