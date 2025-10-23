@@ -1961,6 +1961,7 @@
         }
 
         // Calculate cost for a single item
+        // Calculate cost for a single item
         function calculateItemCost(costItem) {
             const price = parseFloat(costItem.querySelector('.item-price').value) || 0;
             const quantity = parseInt(costItem.querySelector('.item-quantity').value) || 0;
@@ -1968,8 +1969,8 @@
 
             const subtotal = price * quantity;
             const dpp = applyPPN ? subtotal * 11 / 12 : subtotal;
-            const ppn = applyPPN ? subtotal * 1 / 12 : 0;
-            const total = subtotal;
+            const ppn = applyPPN ? subtotal * 11 / 100 : 0; // 11% dari subtotal
+            const total = applyPPN ? subtotal + ppn : subtotal; // subtotal + PPN jika ada
 
             // Format to Indonesian Rupiah
             const formatter = new Intl.NumberFormat('id-ID', {
@@ -1989,7 +1990,7 @@
         function calculateTotalCost() {
             let subtotal = 0;
             let totalPPN = 0;
-            let total = 0;
+            let grandTotal = 0;
 
             document.querySelectorAll('.cost-item').forEach(costItem => {
                 const price = parseFloat(costItem.querySelector('.item-price').value) || 0;
@@ -1997,13 +1998,12 @@
                 const applyPPN = costItem.querySelector('.item-ppn').checked;
 
                 const itemSubtotal = price * quantity;
+                const itemPPN = applyPPN ? itemSubtotal * 11 / 100 : 0; // 11% dari itemSubtotal
+                const itemTotal = itemSubtotal + itemPPN;
+
                 subtotal += itemSubtotal;
-
-                if (applyPPN) {
-                    totalPPN += itemSubtotal * 1 / 12;
-                }
-
-                total += itemSubtotal;
+                totalPPN += itemPPN;
+                grandTotal += itemTotal;
             });
 
             const formatter = new Intl.NumberFormat('id-ID', {
@@ -2012,7 +2012,7 @@
                 minimumFractionDigits: 0
             });
 
-            document.getElementById('costTotal').textContent = `Total: ${formatter.format(total)}`;
+            document.getElementById('costTotal').textContent = `Total: ${formatter.format(grandTotal)}`;
         }
 
         // Save data to localStorage
