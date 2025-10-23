@@ -368,60 +368,61 @@
         }
 
         @media print {
-            @page {
-                size: A4;
-                margin: 0.5cm;
-            }
+    @page {
+        size: A4;
+        margin: 0;
+    }
 
-            body * {
-                visibility: hidden;
-            }
+    html, body {
+        width: 210mm;
+        height: 297mm;
+        margin: 0;
+        padding: 0;
+        background: white;
+        overflow: hidden;
+    }
 
-            .invoice-preview,
-            .invoice-preview * {
-                visibility: visible;
-            }
+    /* Sembunyikan semua kecuali invoice */
+    body * {
+        visibility: hidden !important;
+    }
 
-            .invoice-preview {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                border: none;
-                padding: 0;
-                margin: 0;
-                background: white;
-            }
+    .invoice-preview, 
+    .invoice-preview * {
+        visibility: visible !important;
+    }
 
-            /* Optimasi untuk dot matrix */
-            .invoice-preview {
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-                color: #000 !important;
-                background: white !important;
-            }
+    .invoice-preview {
+        position: absolute; /* bukan fixed */
+        top: -10px; /* naikkan agar benar-benar mulai dari ujung */
+        left: 0;
+        width: 210mm;
+        height: 297mm;
+        margin: 0;
+        padding: 0;
+        border: none !important;
+        background: white !important;
+        overflow: hidden !important;
+        transform: scale(0.95); /* kalau isi terlalu panjang ubah 0.9 atau 0.85 */
+        transform-origin: top left;
+        page-break-after: avoid !important;
+        page-break-before: avoid !important;
+        page-break-inside: avoid !important;
+    }
 
-            .invoice-table th {
-                background-color: transparent !important;
-                -webkit-print-color-adjust: exact;
-            }
+    /* Cegah browser duplikasi konten di tiap halaman */
+    .invoice-preview::after {
+        content: "";
+        display: block;
+        height: 0;
+        page-break-after: avoid;
+    }
 
-            .signature-section {
-                page-break-inside: avoid;
-            }
+    .no-print {
+        display: none !important;
+    }
+}
 
-            .no-print {
-                display: none !important;
-                visibility: hidden !important;
-            }
-
-            /* Pastikan border tercetak dengan jelas */
-            .invoice-table th,
-            .invoice-table td,
-            .terbilang-section {
-                border-color: #000 !important;
-            }
-        }
 
         .history-section {
             margin-top: 20px;
@@ -648,6 +649,35 @@
                 width: 100%;
             }
 
+            .invoice-bank-info {
+                margin: 15px;
+                padding: 10px;
+                border: 2px solid #000;
+                background-color: #f9f9f9;
+                font-size: 10px;
+            }
+
+            .invoice-bank-info h4 {
+                margin: 0 0 8px 0;
+                font-size: 11px;
+                font-weight: bold;
+                text-align: center;
+                border-bottom: 1px solid #000;
+                padding-bottom: 5px;
+            }
+
+            .invoice-bank-info p {
+                margin: 3px 0;
+                line-height: 1.4;
+            }
+
+            @media print {
+                .invoice-bank-info {
+                    background-color: transparent !important;
+                    -webkit-print-color-adjust: exact;
+                }
+            }
+
             /* Invoice details */
             .invoice-details {
                 grid-template-columns: 1fr;
@@ -678,6 +708,73 @@
 
             .invoice-header h3 {
                 font-size: 14px;
+            }
+        }
+
+        .bank-account-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+        }
+
+        .bank-account-item.active {
+            border-color: #4caf50;
+            background-color: #f1f8f4;
+        }
+
+        .bank-account-info {
+            flex: 1;
+        }
+
+        .bank-account-info h4 {
+            margin: 0 0 5px 0;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .bank-account-info p {
+            margin: 0;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .bank-account-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .bank-account-actions button {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+
+        .btn-activate {
+            background-color: #4caf50;
+        }
+
+        .btn-deactivate {
+            background-color: #9e9e9e;
+        }
+
+        /* Responsive */
+        @media screen and (max-width: 768px) {
+            .bank-account-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .bank-account-actions {
+                width: 100%;
+                margin-top: 10px;
+            }
+
+            .bank-account-actions button {
+                flex: 1;
             }
         }
 
@@ -985,6 +1082,50 @@
                 </div>
             </div>
 
+            <!-- Pengaturan Rekening Bank -->
+            <section class="form-section">
+                <h2>🏦 Pengaturan Rekening Bank</h2>
+                <div
+                    style="background: #e3f2fd; padding: 15px; margin-bottom: 15px; border-radius: 4px; border: 1px solid #2196F3;">
+                    <strong>ℹ️ Informasi:</strong>
+                    <ul style="margin: 5px 0 0 20px; font-size: 12px;">
+                        <li>Rekening akan ditampilkan di bagian bawah invoice</li>
+                        <li>Anda bisa menambahkan beberapa rekening</li>
+                        <li>Pilih rekening yang aktif untuk ditampilkan di invoice</li>
+                    </ul>
+                </div>
+
+                <!-- Form Tambah Rekening -->
+                <div
+                    style="border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 4px; background-color: #f9f9f9;">
+                    <h3 style="font-size: 16px; margin-bottom: 15px;">➕ Tambah Rekening Baru</h3>
+                    <div class="form-group">
+                        <label for="bankName">Nama Bank:</label>
+                        <input type="text" id="bankName" placeholder="Contoh: Bank BCA">
+                    </div>
+                    <div class="form-group">
+                        <label for="accountNumber">Nomor Rekening:</label>
+                        <input type="text" id="accountNumber" placeholder="Contoh: 1234567890">
+                    </div>
+                    <div class="form-group">
+                        <label for="accountHolder">Atas Nama:</label>
+                        <input type="text" id="accountHolder" placeholder="Contoh: PT. Pasir Indah Logistik">
+                    </div>
+                    <button type="button" id="addBankAccountBtn" style="background-color: #2196F3;">
+                        ➕ Tambah Rekening
+                    </button>
+                </div>
+
+                <!-- Daftar Rekening -->
+                <div style="border: 1px solid #ddd; padding: 15px; border-radius: 4px;">
+                    <h3 style="font-size: 16px; margin-bottom: 15px;">📋 Daftar Rekening</h3>
+                    <div id="bankAccountsList">
+                        <p style="color: #999; font-style: italic;">Belum ada rekening. Silakan tambahkan rekening baru.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
             <!-- Bagian Export Laporan -->
             <div style="border: 1px solid #ddd; padding: 15px; border-radius: 4px; background-color: #f0f8ff;">
                 <h3 style="font-size: 16px; margin-bottom: 10px;">📊 Export Laporan</h3>
@@ -1099,6 +1240,10 @@
                 <p class="grand-total">GRAND TOTAL : <span id="invTotal">Rp 0</span></p>
             </div>
 
+            <!-- Tambahkan setelah invoice-totals dan sebelum signature-section -->
+            <div class="invoice-bank-info" id="invoiceBankInfo" style="display: none;">
+                <!-- Bank info will be inserted here -->
+            </div>
             <div class="signature-section">
                 <div class="signature-box">
                     <p>Hormat Kami,</p>
@@ -2058,6 +2203,24 @@
             // Update terbilang
             document.getElementById('invTerbilang').textContent = angkaTerbilang(subtotal);
 
+            // Tambahkan setelah update terbilang dan sebelum show invoice preview
+
+            // Show active bank account if exists
+            const activeBankAccount = bankAccounts.find(acc => acc.isActive);
+            const bankInfoDiv = document.getElementById('invoiceBankInfo');
+
+            if (activeBankAccount) {
+                bankInfoDiv.style.display = 'block';
+                bankInfoDiv.innerHTML = `
+        <h4>INFORMASI PEMBAYARAN</h4>
+        <p><strong>Bank:</strong> ${activeBankAccount.bankName}</p>
+        <p><strong>No. Rekening:</strong> ${activeBankAccount.accountNumber}</p>
+        <p><strong>Atas Nama:</strong> ${activeBankAccount.accountHolder}</p>
+    `;
+            } else {
+                bankInfoDiv.style.display = 'none';
+            }
+
             // Show invoice preview and scroll to it
             const invoicePreview = document.getElementById('invoicePreview');
             invoicePreview.style.display = 'block';
@@ -2291,6 +2454,7 @@
         document.getElementById('backupDataBtn').addEventListener('click', function () {
             try {
                 // Kumpulkan semua data
+                // Di dalam backupData object, tambahkan:
                 const backupData = {
                     version: '1.0',
                     backupDate: new Date().toISOString(),
@@ -2298,13 +2462,15 @@
                         allJobOrders: allJobOrders,
                         allStaffingData: allStaffingData,
                         allCostData: allCostData,
-                        customers: JSON.parse(localStorage.getItem('customers')) || []
+                        customers: JSON.parse(localStorage.getItem('customers')) || [],
+                        bankAccounts: bankAccounts  // TAMBAHKAN INI
                     },
                     stats: {
                         totalJobOrders: allJobOrders.length,
                         totalStaffing: allStaffingData.length,
                         totalCost: allCostData.length,
-                        totalCustomers: (JSON.parse(localStorage.getItem('customers')) || []).length
+                        totalCustomers: (JSON.parse(localStorage.getItem('customers')) || []).length,
+                        totalBankAccounts: bankAccounts.length  // TAMBAHKAN INI
                     }
                 };
 
@@ -2470,6 +2636,28 @@
                         }
                     });
 
+                    // ===== MERGE BANK ACCOUNTS =====
+                    const backupBankAccounts = backupData.data.bankAccounts || [];
+                    stats.bankAccounts = { existing: bankAccounts.length, imported: 0, skipped: 0 };
+
+                    backupBankAccounts.forEach(account => {
+                        const exists = bankAccounts.find(acc =>
+                            acc.bankName === account.bankName &&
+                            acc.accountNumber === account.accountNumber
+                        );
+
+                        if (!exists) {
+                            account.id = Date.now().toString() + Math.random().toString(36).substr(2, 9);
+                            account.isActive = false; // Set to inactive to avoid conflict
+                            bankAccounts.push(account);
+                            stats.bankAccounts.imported++;
+                        } else {
+                            stats.bankAccounts.skipped++;
+                        }
+                    });
+
+                    localStorage.setItem('bankAccounts', JSON.stringify(bankAccounts));
+
                     // ===== SAVE TO LOCALSTORAGE =====
                     localStorage.setItem('allJobOrders', JSON.stringify(allJobOrders));
                     localStorage.setItem('allStaffingData', JSON.stringify(allStaffingData));
@@ -2507,6 +2695,11 @@
                         `   • Duplikat (Dilewati): ${stats.customers.skipped}\n` +
                         `   • Total Sekarang: ${existingCustomers.length}\n\n` +
                         `Tanggal Backup: ${new Date(backupData.backupDate).toLocaleString('id-ID')}\n\n` +
+                        `🏦 REKENING BANK:\n` +
+                        `   • Data Sebelumnya: ${stats.bankAccounts.existing}\n` +
+                        `   • Berhasil Ditambahkan: ${stats.bankAccounts.imported}\n` +
+                        `   • Duplikat (Dilewati): ${stats.bankAccounts.skipped}\n` +
+                        `   • Total Sekarang: ${bankAccounts.length}\n\n` +
                         `Halaman akan di-refresh...`;
 
                     alert(report);
@@ -2573,6 +2766,118 @@
             }
         });
 
+        // ========== BANK ACCOUNT MANAGEMENT ==========
+
+        let bankAccounts = JSON.parse(localStorage.getItem('bankAccounts')) || [];
+
+        // Add Bank Account
+        document.getElementById('addBankAccountBtn').addEventListener('click', function () {
+            const bankName = document.getElementById('bankName').value.trim();
+            const accountNumber = document.getElementById('accountNumber').value.trim();
+            const accountHolder = document.getElementById('accountHolder').value.trim();
+
+            if (!bankName || !accountNumber || !accountHolder) {
+                alert('Semua field harus diisi!');
+                return;
+            }
+
+            const newAccount = {
+                id: Date.now().toString(),
+                bankName: bankName,
+                accountNumber: accountNumber,
+                accountHolder: accountHolder,
+                isActive: bankAccounts.length === 0, // First account is active by default
+                createdDate: new Date().toISOString()
+            };
+
+            bankAccounts.push(newAccount);
+            localStorage.setItem('bankAccounts', JSON.stringify(bankAccounts));
+
+            // Clear form
+            document.getElementById('bankName').value = '';
+            document.getElementById('accountNumber').value = '';
+            document.getElementById('accountHolder').value = '';
+
+            renderBankAccounts();
+            alert('Rekening berhasil ditambahkan!');
+        });
+
+        // Render Bank Accounts List
+        function renderBankAccounts() {
+            const container = document.getElementById('bankAccountsList');
+
+            if (bankAccounts.length === 0) {
+                container.innerHTML = '<p style="color: #999; font-style: italic;">Belum ada rekening. Silakan tambahkan rekening baru.</p>';
+                return;
+            }
+
+            container.innerHTML = '';
+
+            bankAccounts.forEach(account => {
+                const accountDiv = document.createElement('div');
+                accountDiv.className = 'bank-account-item' + (account.isActive ? ' active' : '');
+                accountDiv.innerHTML = `
+            <div class="bank-account-info">
+                <h4>
+                    ${account.bankName}
+                    ${account.isActive ? '<span style="color: #4caf50; font-size: 11px;"> ✓ Aktif</span>' : ''}
+                </h4>
+                <p><strong>No. Rekening:</strong> ${account.accountNumber}</p>
+                <p><strong>Atas Nama:</strong> ${account.accountHolder}</p>
+            </div>
+            <div class="bank-account-actions">
+                ${!account.isActive ?
+                        `<button class="btn-activate" onclick="activateBankAccount('${account.id}')">Aktifkan</button>` :
+                        `<button class="btn-deactivate" onclick="deactivateBankAccount('${account.id}')">Non-aktifkan</button>`
+                    }
+                <button class="btn-delete" onclick="deleteBankAccount('${account.id}')">Hapus</button>
+            </div>
+        `;
+                container.appendChild(accountDiv);
+            });
+        }
+
+        // Activate Bank Account
+        function activateBankAccount(id) {
+            // Deactivate all accounts first
+            bankAccounts.forEach(acc => acc.isActive = false);
+
+            // Activate selected account
+            const account = bankAccounts.find(acc => acc.id === id);
+            if (account) {
+                account.isActive = true;
+                localStorage.setItem('bankAccounts', JSON.stringify(bankAccounts));
+                renderBankAccounts();
+                alert(`Rekening ${account.bankName} berhasil diaktifkan!`);
+            }
+        }
+
+        // Deactivate Bank Account
+        function deactivateBankAccount(id) {
+            const account = bankAccounts.find(acc => acc.id === id);
+            if (account) {
+                account.isActive = false;
+                localStorage.setItem('bankAccounts', JSON.stringify(bankAccounts));
+                renderBankAccounts();
+                alert(`Rekening ${account.bankName} berhasil di-non-aktifkan!`);
+            }
+        }
+
+        // Delete Bank Account
+        function deleteBankAccount(id) {
+            const account = bankAccounts.find(acc => acc.id === id);
+            if (!account) return;
+
+            if (!confirm(`Yakin ingin menghapus rekening ${account.bankName}?`)) {
+                return;
+            }
+
+            bankAccounts = bankAccounts.filter(acc => acc.id !== id);
+            localStorage.setItem('bankAccounts', JSON.stringify(bankAccounts));
+            renderBankAccounts();
+            alert('Rekening berhasil dihapus!');
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
             // Load all job orders
             allJobOrders = JSON.parse(localStorage.getItem('allJobOrders')) || [];
@@ -2584,6 +2889,10 @@
 
             // Load job orders list to all selects
             loadJobOrdersList();
+
+            // Load bank accounts
+            bankAccounts = JSON.parse(localStorage.getItem('bankAccounts')) || [];
+            renderBankAccounts();
 
             // Initialize form
             initializeData();
