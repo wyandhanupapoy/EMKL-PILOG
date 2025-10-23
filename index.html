@@ -1628,6 +1628,63 @@
             }
         }
 
+        // Event listener untuk perubahan job order di staffing
+        document.getElementById('jobOrderSelect').addEventListener('change', function () {
+            const jobOrderId = this.value;
+            const staffingContainer = document.getElementById('staffingContainer');
+
+            if (!jobOrderId) {
+                staffingContainer.innerHTML = '<p style="color: #999; font-style: italic;">Silakan pilih Job Order terlebih dahulu</p>';
+                return;
+            }
+
+            const jobOrder = allJobOrders.find(jo => jo.id === jobOrderId);
+            if (!jobOrder) {
+                staffingContainer.innerHTML = '<p style="color: #f44336;">Job Order tidak ditemukan</p>';
+                return;
+            }
+
+            if (!jobOrder.party || jobOrder.party.length === 0) {
+                staffingContainer.innerHTML = '<p style="color: #f44336;">Job Order ini tidak memiliki data party</p>';
+                return;
+            }
+
+            // Clear container
+            staffingContainer.innerHTML = '';
+
+            // Show job order info
+            const infoDiv = document.createElement('div');
+            infoDiv.style.cssText = 'background: #e3f2fd; padding: 10px; margin-bottom: 15px; border-radius: 4px; border: 1px solid #2196F3;';
+            infoDiv.innerHTML = `
+        <strong>📋 Job Order:</strong> ${jobOrder.jobOrderNo}<br>
+        <strong>👤 Konsumen:</strong> ${jobOrder.customerName}<br>
+        <strong>📦 Party:</strong> ${jobOrder.party.map(p => `${p.size} (${p.quantity} unit)`).join(', ')}
+    `;
+            staffingContainer.appendChild(infoDiv);
+
+            // Generate container inputs based on party quantities
+            let containerIndex = 1;
+            jobOrder.party.forEach(partyItem => {
+                for (let i = 0; i < partyItem.quantity; i++) {
+                    const staffingItem = document.createElement('div');
+                    staffingItem.className = 'staffing-item';
+                    staffingItem.innerHTML = `
+                <label style="min-width: 150px;">${partyItem.size} - Container ${containerIndex}:</label>
+                <input type="text" 
+                       data-party="${partyItem.size}" 
+                       data-index="${containerIndex}"
+                       maxlength="20" 
+                       placeholder="Nomor Container"
+                       style="flex: 1;">
+            `;
+                    staffingContainer.appendChild(staffingItem);
+                    containerIndex++;
+                }
+            });
+
+            console.log('Container inputs generated:', containerIndex - 1); // Debug
+        });
+
         document.getElementById('saveStaffingBtn').addEventListener('click', function () {
             const jobOrderId = document.getElementById('jobOrderSelect').value;
             if (!jobOrderId) {
@@ -1677,11 +1734,23 @@
                 createdDate: new Date().toISOString()
             };
 
-            allStaffingData.push(staffingData);
+            // Check if staffing data already exists for this job order
+            const existingIndex = allStaffingData.findIndex(sd => sd.jobOrderId === jobOrderId);
+            if (existingIndex >= 0) {
+                if (confirm('Data staffing untuk Job Order ini sudah ada. Timpa data yang lama?')) {
+                    allStaffingData[existingIndex] = staffingData;
+                } else {
+                    return;
+                }
+            } else {
+                allStaffingData.push(staffingData);
+            }
+
             localStorage.setItem('allStaffingData', JSON.stringify(allStaffingData));
             renderStaffingHistory();
 
             // Clear form after save
+            document.getElementById('staffingDate').value = '';
             document.querySelectorAll('.staffing-item input[type="text"]').forEach(input => {
                 input.value = '';
             });
@@ -1731,11 +1800,41 @@
             <td>${sd.containers.length} container</td>
             <td>
                 <button class="btn-view" onclick="viewStaffing('${sd.id}')">Lihat</button>
+                <button class="btn-edit" onclick="editStaffing('${sd.id}')">Edit</button>
                 <button class="btn-delete" onclick="deleteStaffing('${sd.id}')">Hapus</button>
             </td>
         `;
                 tbody.appendChild(row);
             });
+        }
+
+        // Fungsi untuk edit staffing
+        function editStaffing(id) {
+            const sd = allStaffingData.find(s => s.id === id);
+            if (!sd) return;
+
+            // Set job order
+            document.getElementById('jobOrderSelect').value = sd.jobOrderId;
+
+            // Trigger change event untuk memuat container
+            const event = new Event('change');
+            document.getElementById('jobOrderSelect').dispatchEvent(event);
+
+            // Set tanggal
+            document.getElementById('staffingDate').value = sd.date;
+
+            // Isi nomor container setelah container inputs selesai dimuat
+            setTimeout(() => {
+                const containerInputs = document.querySelectorAll('.staffing-item input[type="text"]');
+                sd.containers.forEach((container, index) => {
+                    if (containerInputs[index]) {
+                        containerInputs[index].value = container.number;
+                    }
+                });
+            }, 100);
+
+            window.scrollTo({ top: document.querySelector('.form-section').offsetTop, behavior: 'smooth' });
+            alert('Data Staffing dimuat. Silakan edit dan simpan kembali.');
         }
 
         document.getElementById('filterStaffing').addEventListener('input', function () {
