@@ -1865,7 +1865,7 @@
 
             const subtotal = price * quantity;
             const dpp = applyPPN ? subtotal * 11 / 12 : subtotal;
-            const ppn = applyPPN ? subtotal * 1 / 12 : 0;
+            const ppn = applyPPN ? subtotal * 11 / 100 : 0;
             const total = subtotal;
 
             // Format to Indonesian Rupiah
@@ -1897,7 +1897,7 @@
                 subtotal += itemSubtotal;
 
                 if (applyPPN) {
-                    totalPPN += itemSubtotal * 1 / 12;
+                    totalPPN += itemSubtotal * 11 / 100;
                 }
 
                 total += itemSubtotal;
@@ -2178,7 +2178,7 @@
             costData.items.forEach((cost, index) => {
                 const itemSubtotal = cost.price * cost.quantity;
                 const dpp = cost.ppn ? itemSubtotal * 11 / 12 : itemSubtotal;
-                const ppn = cost.ppn ? itemSubtotal * 1 / 12 : 0;
+                const ppn = cost.ppn ? itemSubtotal * 11 / 100 : 0;
 
                 subtotal += itemSubtotal;
                 totalPPN += ppn;
@@ -2346,7 +2346,7 @@
                 cd.items.forEach(item => {
                     const itemSubtotal = item.price * item.quantity;
                     const dpp = item.ppn ? itemSubtotal * 11 / 12 : itemSubtotal;
-                    const ppn = item.ppn ? itemSubtotal * 1 / 12 : 0;
+                    const ppn = item.ppn ? itemSubtotal * 11 / 100 : 0;
 
                     costData.push([
                         costNo,
