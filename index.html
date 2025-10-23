@@ -1802,16 +1802,16 @@
         }
 
         // Add cost item
-        // Add cost item
-        document.getElementById('addCostItemBtn').addEventListener('click', addCostItem);
-
-        function addCostItem() {
+        document.getElementById('addCostItemBtn').addEventListener('click', function () {
             const jobOrderId = document.getElementById('jobOrderSelectCost').value;
             if (!jobOrderId) {
                 alert('Pilih Job Order terlebih dahulu!');
                 return;
             }
+            addCostItem();
+        });
 
+        function addCostItem() {
             const costItems = document.getElementById('costItems');
             const itemCount = costItems.querySelectorAll('.cost-item').length;
 
@@ -1883,8 +1883,7 @@
                 loadCostData(existingCostData);
             } else {
                 clearCostForm();
-                // Tambahkan satu item kosong untuk input baru
-                addCostItem();
+                // Jangan otomatis tambahkan item kosong, biarkan user yang menambah
             }
         });
 
@@ -2068,9 +2067,9 @@
             alert('Data Biaya berhasil disimpan!');
         });
 
-        // Pastikan form kosong saat pertama kali load
+        // Hapus pemanggilan addCostItem() saat DOMContentLoaded
         document.addEventListener('DOMContentLoaded', function () {
-            clearCostForm();
+            clearCostForm(); // Hanya kosongkan form, jangan tambah item
         });
 
         document.getElementById('toggleCostHistoryBtn').addEventListener('click', function () {
