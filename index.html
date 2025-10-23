@@ -1866,7 +1866,7 @@
             const subtotal = price * quantity;
             const dpp = applyPPN ? subtotal * 11 / 12 : subtotal;
             const ppn = applyPPN ? subtotal * 11 / 100 : 0;
-            const total = subtotal;
+            const total = subtotal + ppn;
 
             // Format to Indonesian Rupiah
             const formatter = new Intl.NumberFormat('id-ID', {
@@ -2180,7 +2180,7 @@
                 const dpp = cost.ppn ? itemSubtotal * 11 / 12 : itemSubtotal;
                 const ppn = cost.ppn ? itemSubtotal * 11 / 100 : 0;
 
-                subtotal += itemSubtotal;
+                subtotal += itemSubtotal + ppn;
                 totalPPN += ppn;
 
                 const row = document.createElement('tr');
